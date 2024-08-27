@@ -12,7 +12,7 @@ var map = new ol.Map({
 });
 
 //initial view - epsg:3857 coordinates if not "Match project CRS"
-map.getView().fit([115.806722, -32.420792, 116.231144, -32.198462], map.getSize());
+map.getView().fit([115.770995, -32.652131, 115.877101, -32.596548], map.getSize());
 
 ////small screen definition
     var hasTouchScreen = map.getViewport().classList.contains('ol-touch');
@@ -115,7 +115,7 @@ var featureOverlay = new ol.layer.Vector({
     updateWhileInteracting: true // optional, for instant visual feedback
 });
 
-var doHighlight = false;
+var doHighlight = true;
 var doHover = false;
 
 function createPopupField(currentFeature, currentFeatureKeys, layer) {

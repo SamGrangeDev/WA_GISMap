@@ -4,15 +4,12 @@ var map = new ol.Map({
     renderer: 'canvas',
     layers: layersList,
     view: new ol.View({
-         maxZoom: 28, minZoom: 1, projection: new ol.proj.Projection({
-            code: 'EPSG:4283',
-            //extent: [-20037508.342789, -20037508.342789, 20037508.342789, 20037508.342789],
-            units: 'degrees'})
+         maxZoom: 28, minZoom: 1
     })
 });
 
 //initial view - epsg:3857 coordinates if not "Match project CRS"
-map.getView().fit([115.770995, -32.652131, 115.877101, -32.596548], map.getSize());
+map.getView().fit([12873682.325712, -3872367.960805, 12965909.220139, -3810049.277494], map.getSize());
 
 ////small screen definition
     var hasTouchScreen = map.getViewport().classList.contains('ol-touch');
@@ -177,7 +174,7 @@ function onPointerMove(evt) {
     var currentLayer;
     var currentFeatureKeys;
     var clusteredFeatures;
-    var clusterLenght;
+    var clusterLength;
     var popupText = '<ul>';
     map.forEachFeatureAtPixel(pixel, function(feature, layer) {
         if (layer && feature instanceof ol.Feature && (layer.get("interactive") || layer.get("interactive") == undefined)) {
@@ -191,7 +188,7 @@ function onPointerMove(evt) {
             currentLayer = layer;
             clusteredFeatures = feature.get("features");
             if (clusteredFeatures) {
-				clusterLenght = clusteredFeatures.length;
+				clusterLength = clusteredFeatures.length;
 			}
             var clusterFeature;
             if (typeof clusteredFeatures !== "undefined") {
@@ -216,67 +213,65 @@ function onPointerMove(evt) {
             }
         }
     });
-    if (popupText == '<ul>') {
-        popupText = '';
-    } else {
-        popupText += '</ul>';
-    }
-    
-	if (doHighlight) {
+    if (doHighlight) {
         if (currentFeature !== highlight) {
-            if (highlight) {
+            // Check if highlight is defined and exists in the source before removing
+            if (highlight && featureOverlay.getSource().getFeatures().includes(highlight)) {
                 featureOverlay.getSource().removeFeature(highlight);
             }
             if (currentFeature) {
-                var featureStyle
+                var featureStyle;
                 if (typeof clusteredFeatures == "undefined") {
-					var style = currentLayer.getStyle();
-					var styleFunction = typeof style === 'function' ? style : function() { return style; };
-					featureStyle = styleFunction(currentFeature)[0];
-				} else {
-					featureStyle = currentLayer.getStyle().toString();
-				}
-
+                    var style = currentLayer.getStyle();
+                    var styleFunction = typeof style === 'function' ? style : function() { return style; };
+                    featureStyle = styleFunction(currentFeature)[0];
+                } else {
+                    featureStyle = currentLayer.getStyle().toString();
+                }
+    
                 if (currentFeature.getGeometry().getType() == 'Point' || currentFeature.getGeometry().getType() == 'MultiPoint') {
-                    var radius
-					if (typeof clusteredFeatures == "undefined") {
-						radius = featureStyle.getImage().getRadius();
-					} else {
-						radius = parseFloat(featureStyle.split('radius')[1].split(' ')[1]) + clusterLenght;
-					}
-
+                    var radius = featureStyle.getImage().getRadius();
+                    
                     highlightStyle = new ol.style.Style({
                         image: new ol.style.Circle({
                             fill: new ol.style.Fill({
-                                color: "#ffff00"
+                                color: "#ffff00"  // Yellow fill for point highlight
                             }),
                             radius: radius
                         })
-                    })
+                    });
                 } else if (currentFeature.getGeometry().getType() == 'LineString' || currentFeature.getGeometry().getType() == 'MultiLineString') {
-
+                    
                     var featureWidth = featureStyle.getStroke().getWidth();
-
+                    
                     highlightStyle = new ol.style.Style({
                         stroke: new ol.style.Stroke({
-                            color: '#ffff00',
+                            color: '#ffff00',   // Yellow color for line highlight
                             lineDash: null,
                             width: featureWidth
                         })
                     });
-
-                } else {
+                } else {  // Polygon or MultiPolygon
                     highlightStyle = new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#ffff00',  // Outline color for polygon highlight
+                            width: 2           // Adjust width as needed
+                        }),
                         fill: new ol.style.Fill({
-                            color: '#ffff00'
+                            color: 'rgba(255, 255, 255, 0)'  // Transparent fill for polygon
                         })
-                    })
+                    });
                 }
+                
+                // Add the highlighted feature to the overlay and apply the style
                 featureOverlay.getSource().addFeature(currentFeature);
                 featureOverlay.setStyle(highlightStyle);
+                highlight = currentFeature;
             }
-            highlight = currentFeature;
         }
+    }
+    
+    
     }
 
     if (doHover) {
@@ -289,8 +284,17 @@ function onPointerMove(evt) {
             closer.blur();
         }
     }
-};
 
+    if (doHover) {
+        if (popupText) {
+            overlayPopup.setPosition(coord);
+            content.innerHTML = popupText;
+            container.style.display = 'block';        
+        } else {
+            container.style.display = 'none';
+            closer.blur();
+        }
+    };
 map.on('pointermove', onPointerMove);
 
 var popupContent = '';
@@ -439,11 +443,11 @@ var bottomRightContainerDiv = document.getElementById('bottom-right-container')
 var Title = new ol.control.Control({
     element: (() => {
         var titleElement = document.createElement('div');
-        titleElement.className = 'bottom-left-title ol-control';
-        titleElement.innerHTML = '<h2 class="project-title">WA GIS Map</h2>';
+        titleElement.className = 'top-left-title ol-control';
+        titleElement.innerHTML = '<h2 class="project-title">Murray Maps</h2>';
         return titleElement;
     })(),
-    target: 'bottom-left-container'
+    target: 'top-left-container'
 });
 map.addControl(Title)
     
@@ -542,7 +546,7 @@ var measureControl = (function (Control) {
     typeSelect.id = "type";
 
     var measurementOption = [
-        { value: "LineString", description: "Lenght" },
+        { value: "LineString", description: "Length" },
         { value: "Polygon", description: "Area" }
         ];
     measurementOption.forEach(function (option) {
@@ -842,19 +846,20 @@ if (elementToMove && parentElement) {
 
 //geocoder
 
-var geocoder = new Geocoder('nominatim', {
-  provider: 'osm',
-  lang: 'en-US',
-  placeholder: 'Search place or address ...',
-  limit: 5,
-  keepOpen: true,
-});
-map.addControl(geocoder);
-document.getElementsByClassName('gcd-gl-btn')[0].className += ' fa fa-search';
-
 
 //layer search
 
+var searchLayer = new SearchLayer({
+    layer: lyr_ParcelAttributes_64,
+    colName: 'Address',
+    zoom: 10,
+    collapsed: true,
+    map: map
+});
+map.addControl(searchLayer);
+document.getElementsByClassName('search-layer')[0].getElementsByTagName('button')[0].className += ' fa fa-binoculars';
+document.getElementsByClassName('search-layer-input-search')[0].placeholder = 'Search feature ...';
+    
 
 //scalebar
 
@@ -901,18 +906,20 @@ bottomAttribution.element.appendChild(attributionList);
 
 
 // Disable "popup on hover" or "highlight on hover" if ol-control mouseover
+var preDoHover = doHover;
+var preDoHighlight = doHighlight;
+var isPopupAllActive = false;
 document.addEventListener('DOMContentLoaded', function() {
-    var preDoHover = doHover;
-	var preDoHighlight = doHighlight;
 	if (doHover || doHighlight) {
 		var controlElements = document.getElementsByClassName('ol-control');
 		for (var i = 0; i < controlElements.length; i++) {
-			controlElements[i].addEventListener('mouseover', function() {
-				if (doHover) { doHover = false; }
-				if (doHighlight) { doHighlight = false; }
+			controlElements[i].addEventListener('mouseover', function() { 
+				doHover = false;
+				doHighlight = false;
 			});
 			controlElements[i].addEventListener('mouseout', function() {
 				doHover = preDoHover;
+				if (isPopupAllActive) { return }
 				doHighlight = preDoHighlight;
 			});
 		}

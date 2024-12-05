@@ -9,7 +9,7 @@ var map = new ol.Map({
 });
 
 //initial view - epsg:3857 coordinates if not "Match project CRS"
-map.getView().fit([12873682.325712, -3872367.960805, 12965909.220139, -3810049.277494], map.getSize());
+map.getView().fit([12897312.947948, -3802785.725125, 12911211.108043, -3789622.639213], map.getSize());
 
 ////small screen definition
     var hasTouchScreen = map.getViewport().classList.contains('ol-touch');
@@ -213,7 +213,13 @@ function onPointerMove(evt) {
             }
         }
     });
-    if (doHighlight) {
+    if (popupText == '<ul>') {
+        popupText = '';
+    } else {
+        popupText += '</ul>';
+    }
+    
+	if (doHighlight) {
         if (currentFeature !== highlight) {
             // Check if highlight is defined and exists in the source before removing
             if (highlight && featureOverlay.getSource().getFeatures().includes(highlight)) {
@@ -295,6 +301,7 @@ function onPointerMove(evt) {
             closer.blur();
         }
     };
+    
 map.on('pointermove', onPointerMove);
 
 var popupContent = '';
@@ -444,7 +451,7 @@ var Title = new ol.control.Control({
     element: (() => {
         var titleElement = document.createElement('div');
         titleElement.className = 'top-left-title ol-control';
-        titleElement.innerHTML = '<h2 class="project-title">Murray Maps</h2>';
+        titleElement.innerHTML = '<h2 class="project-title">WA GIS Map</h2>';
         return titleElement;
     })(),
     target: 'top-left-container'
@@ -849,17 +856,6 @@ if (elementToMove && parentElement) {
 
 //layer search
 
-var searchLayer = new SearchLayer({
-    layer: lyr_ParcelAttributes_64,
-    colName: 'Address',
-    zoom: 10,
-    collapsed: true,
-    map: map
-});
-map.addControl(searchLayer);
-document.getElementsByClassName('search-layer')[0].getElementsByTagName('button')[0].className += ' fa fa-binoculars';
-document.getElementsByClassName('search-layer-input-search')[0].placeholder = 'Search feature ...';
-    
 
 //scalebar
 
